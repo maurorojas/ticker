@@ -11,20 +11,23 @@
     }
 
     #ticker-container {
+      display: block;
+      position: relative;
+      z-index: 1000;          /* asegura que no se monte debajo del menú */
       overflow: hidden;
       background: #14282d;
       color: #e0e1dd;
-      height: 40px;
+      height: 40px;           /* reserva espacio fijo */
       line-height: 40px;
       font-family:"Open Sans", sans-serif;
       font-size:13px;
     }
 
-    /* Track con tres copias en fila */
     #ticker-track {
       display: flex;
       white-space: nowrap;
-      animation: scroll 20s linear infinite;
+      width: max-content;     /* se ajusta al contenido real */
+      animation: scroll linear infinite;
     }
 
     .ticker-inner {
@@ -40,11 +43,6 @@
     .ticker-up   { color:#00d26a; }
     .ticker-down { color:#ff3b3b; }
     .ticker-flat { color:#ffd400; }
-
-    @keyframes scroll {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-100%); }
-    }
 
     @media (max-width: 768px) {
       #ticker-container { height: 32px; line-height: 32px; font-size:12px; }
@@ -70,6 +68,7 @@
       const seg1 = document.getElementById("seg1");
       const seg2 = document.getElementById("seg2");
       const seg3 = document.getElementById("seg3");
+      const track = document.getElementById("ticker-track");
 
       seg1.innerHTML = "";
       seg2.innerHTML = "";
@@ -113,6 +112,28 @@
       // Clonar contenido en seg2 y seg3
       seg2.innerHTML = seg1.innerHTML;
       seg3.innerHTML = seg1.innerHTML;
+
+      // 🔑 Ajuste: calcular duración automática y keyframes en píxeles
+      await new Promise(requestAnimationFrame);
+      const segWidth = seg1.scrollWidth;
+      const pxPerSecond = 50; // velocidad deseada (50px/s)
+      const duration = segWidth / pxPerSecond;
+
+      // recrear keyframes dinámicos
+      const styleSheet = document.styleSheets[0];
+      for (let i = styleSheet.cssRules.length - 1; i >= 0; i--) {
+        if (styleSheet.cssRules[i].name === "scroll") {
+          styleSheet.deleteRule(i);
+        }
+      }
+      styleSheet.insertRule(`
+        @keyframes scroll {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-${segWidth}px); }
+        }
+      `, styleSheet.cssRules.length);
+
+      track.style.animationDuration = duration + "s";
 
     } catch (err) {
       document.getElementById("seg1").textContent = "Error cargando datos";
