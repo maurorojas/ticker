@@ -24,7 +24,6 @@
       display: flex;
       white-space: nowrap;
       will-change: transform;
-      animation: marquee 20s linear infinite;
     }
 
     .ticker-segment {
@@ -40,11 +39,6 @@
     .ticker-up   { color:#00d26a; }
     .ticker-down { color:#ff3b3b; }
     .ticker-flat { color:#ffd400; }
-
-    @keyframes marquee {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
   </style>
 </head>
 <body>
@@ -106,9 +100,28 @@
       // Clona contenido
       seg2.innerHTML = seg1.innerHTML;
 
-      // 🔑 Ajuste: track mide el doble del ancho de seg1
+      // 🔑 Ajuste: calcular ancho y aplicar animación dinámica
       const seg1Width = seg1.scrollWidth;
       track.style.width = (seg1Width * 2) + "px";
+
+      // Crea animación en píxeles
+      const duration = 20; // segundos
+      track.style.animation = `marquee ${duration}s linear infinite`;
+
+      // Inserta keyframes dinámicos
+      const styleSheet = document.styleSheets[0];
+      // Borra keyframes previos si existen
+      for (let i = styleSheet.cssRules.length - 1; i >= 0; i--) {
+        if (styleSheet.cssRules[i].name === "marquee") {
+          styleSheet.deleteRule(i);
+        }
+      }
+      styleSheet.insertRule(`
+        @keyframes marquee {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-${seg1Width}px); }
+        }
+      `, styleSheet.cssRules.length);
 
     } catch (err) {
       document.getElementById("ticker-seg1").textContent = "Error cargando datos";
