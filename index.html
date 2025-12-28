@@ -44,10 +44,10 @@
     .ticker-down { color:#ff3b3b; }
     .ticker-flat { color:#ffd400; }
 
-    /* El track se mueve medio ancho (dos segmentos iguales) */
+    /* El track se mueve todo el ancho (dos segmentos iguales) */
     @keyframes marquee {
       0%   { transform: translate3d(0, 0, 0); }
-      100% { transform: translate3d(-50%, 0, 0); }
+      100% { transform: translate3d(-100%, 0, 0); }
     }
 
     /* Opcional: móvil más rápido/compacto */
@@ -73,7 +73,6 @@
 
       const seg1 = document.getElementById("ticker-seg1");
       const seg2 = document.getElementById("ticker-seg2");
-      const track = document.getElementById("ticker-track");
 
       // Limpia contenido
       seg1.innerHTML = "";
@@ -106,7 +105,7 @@
       addItem("RARI",  data.crypto?.RARI, seg1);
       addItem("ZORA",  data.crypto?.ZORA, seg1);
 
-      // Índices (como valores simbólicos)
+      // Índices
       function addIndex(label, value, target) {
         const span = document.createElement("span");
         span.className = "ticker-item ticker-flat";
@@ -119,12 +118,6 @@
 
       // Clona el contenido para crear la cinta continua
       seg2.innerHTML = seg1.innerHTML;
-
-      // Reinicia suavemente la animación del track sin parpadeo
-      track.style.animation = "none";
-      // Fuerza reflow
-      void track.offsetWidth;
-      track.style.animation = "";
 
     } catch (err) {
       document.getElementById("ticker-seg1").textContent = "Error cargando datos";
