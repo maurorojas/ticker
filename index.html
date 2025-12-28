@@ -4,11 +4,40 @@
   <meta charset="UTF-8">
   <title>Ticker</title>
   <style>
-    #ticker-container { width:100%; overflow:hidden; background:#111; color:#fff; font-family:monospace; padding:6px 0; border-top:2px solid #333; border-bottom:2px solid #333; }
-    #ticker { display:inline-block; white-space:nowrap; animation:scroll-left 25s linear infinite; }
-    @keyframes scroll-left { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
-    .ticker-item { display:inline-block; margin:0 25px; font-weight:bold; }
-    .ticker-up { color:#0f0; } .ticker-down { color:#f33; } .ticker-flat { color:#ff0; }
+    html, body {
+      margin:0;
+      padding:0;
+      overflow:hidden; /* evita scroll interno */
+    }
+    #ticker-container {
+      width:100%;
+      height:40px;            /* altura fija */
+      line-height:40px;       /* centra verticalmente */
+      background:#111;
+      color:#fff;
+      font-family:monospace;
+      border-top:2px solid #333;
+      border-bottom:2px solid #333;
+      overflow:hidden;
+    }
+    #ticker {
+      display:inline-block;
+      white-space:nowrap;
+      animation:scroll-left 25s linear infinite;
+    }
+    .ticker-item {
+      display:inline-block;
+      margin:0 25px;
+      font-weight:bold;
+    }
+    .ticker-up { color:#0f0; }
+    .ticker-down { color:#f33; }
+    .ticker-flat { color:#ff0; }
+
+    @keyframes scroll-left {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
   </style>
 </head>
 <body>
@@ -40,6 +69,7 @@
         tickerDiv.appendChild(span);
       }
 
+      // Criptos
       addItem("₿ BTC", data.crypto?.BTC);
       addItem("Ξ ETH", data.crypto?.ETH);
       addItem("◎ SOL", data.crypto?.SOL);
@@ -47,6 +77,7 @@
       addItem("RARI", data.crypto?.RARI);
       addItem("ZORA", data.crypto?.ZORA);
 
+      // Índices
       function addIndex(label, value) {
         const span = document.createElement("span");
         span.className = "ticker-item ticker-flat";
@@ -57,6 +88,9 @@
       addIndex("Nasdaq", data.indices?.nasdaq);
       addIndex("DowJones", data.indices?.dowjones);
 
+      // 🔁 duplicar contenido para scroll infinito
+      tickerDiv.innerHTML += tickerDiv.innerHTML;
+
     } catch (err) {
       document.getElementById("ticker").textContent = "Error cargando datos";
       console.error("Ticker error:", err);
@@ -64,7 +98,7 @@
   }
 
   loadTicker();
-  setInterval(loadTicker, 300000);
+  setInterval(loadTicker, 300000); // refresca cada 5 min
   </script>
 </body>
 </html>
