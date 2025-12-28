@@ -49,13 +49,13 @@
     <div id="ticker-track">
       <div id="ticker-seg1" class="ticker-segment">Cargando datos...</div>
       <div id="ticker-seg2" class="ticker-segment"></div>
+      <div id="ticker-seg3" class="ticker-segment"></div>
     </div>
   </div>
 
   <script>
-  let seg1Width = 0;
-  let pos1 = 0;
-  let pos2 = 0;
+  let segWidth = 0;
+  let pos1 = 0, pos2 = 0, pos3 = 0;
   let speed = 1; // píxeles por frame
   let rafId = null;
 
@@ -66,9 +66,11 @@
 
       const seg1 = document.getElementById("ticker-seg1");
       const seg2 = document.getElementById("ticker-seg2");
+      const seg3 = document.getElementById("ticker-seg3");
 
       seg1.innerHTML = "";
       seg2.innerHTML = "";
+      seg3.innerHTML = "";
 
       function addItem(label, obj, target) {
         const span = document.createElement("span");
@@ -105,19 +107,22 @@
       addIndex("Nasdaq",  data.indices?.nasdaq,  seg1);
       addIndex("DowJones",data.indices?.dowjones,seg1);
 
-      // Clona contenido
+      // Clonar contenido en seg2 y seg3
       seg2.innerHTML = seg1.innerHTML;
+      seg3.innerHTML = seg1.innerHTML;
 
       // Medir ancho
       await new Promise(requestAnimationFrame);
-      seg1Width = seg1.scrollWidth;
+      segWidth = seg1.scrollWidth;
 
       // Posiciones iniciales
       pos1 = 0;
-      pos2 = seg1Width;
+      pos2 = segWidth;
+      pos3 = segWidth * 2;
 
       seg1.style.left = pos1 + "px";
       seg2.style.left = pos2 + "px";
+      seg3.style.left = pos3 + "px";
 
       startLoop();
 
@@ -132,19 +137,19 @@
     function step() {
       pos1 -= speed;
       pos2 -= speed;
+      pos3 -= speed;
 
-      // Cuando un segmento sale por completo, lo recolocamos al final del otro
-      if (pos1 <= -seg1Width) {
-        pos1 = pos2 + seg1Width;
-      }
-      if (pos2 <= -seg1Width) {
-        pos2 = pos1 + seg1Width;
-      }
+      // Recolocar cada segmento cuando sale por completo
+      if (pos1 <= -segWidth) pos1 = Math.max(pos2, pos3) + segWidth;
+      if (pos2 <= -segWidth) pos2 = Math.max(pos1, pos3) + segWidth;
+      if (pos3 <= -segWidth) pos3 = Math.max(pos1, pos2) + segWidth;
 
       const seg1 = document.getElementById("ticker-seg1");
       const seg2 = document.getElementById("ticker-seg2");
+      const seg3 = document.getElementById("ticker-seg3");
       seg1.style.left = pos1 + "px";
       seg2.style.left = pos2 + "px";
+      seg3.style.left = pos3 + "px";
 
       rafId = requestAnimationFrame(step);
     }
