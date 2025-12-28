@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticker</title>
+  <style>
+    #ticker-container { width:100%; overflow:hidden; background:#111; color:#fff; font-family:monospace; padding:6px 0; border-top:2px solid #333; border-bottom:2px solid #333; }
+    #ticker { display:inline-block; white-space:nowrap; animation:scroll-left 25s linear infinite; }
+    @keyframes scroll-left { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+    .ticker-item { display:inline-block; margin:0 25px; font-weight:bold; }
+    .ticker-up { color:#0f0; } .ticker-down { color:#f33; } .ticker-flat { color:#ff0; }
+  </style>
+</head>
+<body>
+  <div id="ticker-container">
+    <div id="ticker">Cargando datos del mercado...</div>
+  </div>
+
+  <script>
+  async function loadTicker() {
+    try {
+      const res = await fetch("https://ticker.maurorojasbiz.workers.dev/");
+      const data = await res.json();
+      const tickerDiv = document.getElementById("ticker");
+      tickerDiv.innerHTML = "";
+
+      function addItem(label, obj) {
+        const span = document.createElement("span");
+        span.className = "ticker-item";
+        if (obj && obj.usd != null) {
+          const change = Number(obj.change);
+          if (change > 0) span.classList.add("ticker-up");
+          else if (change < 0) span.classList.add("ticker-down");
+          else span.classList.add("ticker-flat");
+          span.textContent = label + ": " + obj.usd.toFixed(2) + " (" + change + "%)";
+        } else {
+          span.classList.add("ticker-flat");
+          span.textContent = label + ": —";
+        }
+        tickerDiv.appendChild(span);
+      }
+
+      addItem("₿ BTC", data.crypto?.BTC);
+      addItem("Ξ ETH", data.crypto?.ETH);
+      addItem("◎ SOL", data.crypto?.SOL);
+      addItem("BNB", data.crypto?.BNB);
+      addItem("RARI", data.crypto?.RARI);
+      addItem("ZORA", data.crypto?.ZORA);
+
+      function addIndex(label, value) {
+        const span = document.createElement("span");
+        span.className = "ticker-item ticker-flat";
+        span.textContent = label + ": " + (value ?? "—");
+        tickerDiv.appendChild(span);
+      }
+      addIndex("S&P500", data.indices?.sp500);
+      addIndex("Nasdaq", data.indices?.nasdaq);
+      addIndex("DowJones", data.indices?.dowjones);
+
+    } catch (err) {
+      document.getElementById("ticker").textContent = "Error cargando datos";
+      console.error("Ticker error:", err);
+    }
+  }
+
+  loadTicker();
+  setInterval(loadTicker, 300000);
+  </script>
+</body>
+</html>
