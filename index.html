@@ -16,10 +16,13 @@
       border-top:none;
       border-bottom:none;
       overflow:hidden;
-      background:#0d1b2a;   /* azul petróleo */
+      background:#14282d;   /* azul petróleo */
       color:#e0e1dd;        /* gris claro */
       font-family:"Open Sans", sans-serif;
       font-size:13px;
+      position: relative;   /* en vez de fixed */
+      display: block;
+}
     }
     #ticker {
       display:inline-block;
@@ -39,6 +42,16 @@
       0%   { transform: translateX(0); }
       100% { transform: translateX(-50%); }
     }
+    @media (max-width: 768px) {
+  #ticker-container {
+    font-size: 12px;   /* texto más pequeño */
+    height: 32px;      /* menos alto */
+    line-height: 32px;
+  }
+  #menu {
+    margin-top: 32px;  /* ajusta al nuevo alto */
+  }
+}
   </style>
 </head>
 <body>
