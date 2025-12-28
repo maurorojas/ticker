@@ -10,26 +10,23 @@
       overflow:hidden;
     }
 
-    /* Barra fija */
     #ticker-container {
       overflow: hidden;
-      background: #14282d;  /* azul petróleo */
-      color: #e0e1dd;       /* gris claro */
+      background: #14282d;
+      color: #e0e1dd;
       height: 40px;
       line-height: 40px;
-      font-family:"Open Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-family:"Open Sans", sans-serif;
       font-size:13px;
     }
 
-    /* Pista que se desplaza continuamente */
     #ticker-track {
-      display: inline-flex;      /* una línea continua */
+      display: flex;
       white-space: nowrap;
       will-change: transform;
       animation: marquee 20s linear infinite;
     }
 
-    /* Segmentos: contenido original + clon */
     .ticker-segment {
       display: inline-block;
       white-space: nowrap;
@@ -44,16 +41,9 @@
     .ticker-down { color:#ff3b3b; }
     .ticker-flat { color:#ffd400; }
 
-    /* El track se mueve todo el ancho (dos segmentos iguales) */
     @keyframes marquee {
-      0%   { transform: translate3d(0, 0, 0); }
-      100% { transform: translate3d(-100%, 0, 0); }
-    }
-
-    /* Opcional: móvil más rápido/compacto */
-    @media (max-width: 768px) {
-      #ticker-container { height: 32px; line-height: 32px; font-size:12px; }
-      .ticker-item { margin: 0 18px; }
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
     }
   </style>
 </head>
@@ -73,19 +63,16 @@
 
       const seg1 = document.getElementById("ticker-seg1");
       const seg2 = document.getElementById("ticker-seg2");
+      const track = document.getElementById("ticker-track");
 
-      // Limpia contenido
       seg1.innerHTML = "";
       seg2.innerHTML = "";
 
-      // Helper para items de precio
       function addItem(label, obj, target) {
         const span = document.createElement("span");
         span.className = "ticker-item";
-        let change = null;
-
         if (obj && obj.usd != null) {
-          change = Number(obj.change);
+          const change = Number(obj.change);
           if (change > 0) span.classList.add("ticker-up");
           else if (change < 0) span.classList.add("ticker-down");
           else span.classList.add("ticker-flat");
@@ -116,8 +103,12 @@
       addIndex("Nasdaq",  data.indices?.nasdaq,  seg1);
       addIndex("DowJones",data.indices?.dowjones,seg1);
 
-      // Clona el contenido para crear la cinta continua
+      // Clona contenido
       seg2.innerHTML = seg1.innerHTML;
+
+      // 🔑 Ajuste: track mide el doble del ancho de seg1
+      const seg1Width = seg1.scrollWidth;
+      track.style.width = (seg1Width * 2) + "px";
 
     } catch (err) {
       document.getElementById("ticker-seg1").textContent = "Error cargando datos";
@@ -125,7 +116,6 @@
     }
   }
 
-  // Carga inicial y refresco cada 5 minutos
   loadTicker();
   setInterval(loadTicker, 300000);
   </script>
