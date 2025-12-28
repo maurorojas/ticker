@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Ticker</title>
+  <title>Ticker continuo</title>
   <style>
     html, body {
       margin:0;
@@ -10,28 +10,28 @@
       overflow:hidden;
     }
 
-    /* Barra fija */
     #ticker-container {
       overflow: hidden;
-      background: #14282d;  /* azul petróleo */
-      color: #e0e1dd;       /* gris claro */
+      background: #14282d;
+      color: #e0e1dd;
       height: 40px;
       line-height: 40px;
-      font-family:"Open Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-family:"Open Sans", sans-serif;
       font-size:13px;
     }
 
-    /* Track con dos segmentos, desplazado por JS */
     #ticker-track {
-      display: inline-flex;
+      position: relative;
+      display: flex;
       white-space: nowrap;
       will-change: transform;
-      transform: translateX(0);
     }
 
     .ticker-segment {
       display: inline-block;
       white-space: nowrap;
+      position: absolute;
+      top: 0;
     }
 
     .ticker-item {
@@ -42,11 +42,6 @@
     .ticker-up   { color:#00d26a; }
     .ticker-down { color:#ff3b3b; }
     .ticker-flat { color:#ffd400; }
-
-    @media (max-width: 768px) {
-      #ticker-container { height: 32px; line-height: 32px; font-size:12px; }
-      .ticker-item { margin: 0 18px; }
-    }
   </style>
 </head>
 <body>
@@ -58,10 +53,10 @@
   </div>
 
   <script>
-  // Velocidad en píxeles por frame (se ajusta dinámicamente más abajo)
-  let speed = 0.8; // base; se recalibra tras medir ancho
-  let pos = 0;     // posición actual del track
   let seg1Width = 0;
+  let pos1 = 0;
+  let pos2 = 0;
+  let speed = 1; // píxeles por frame
   let rafId = null;
 
   async function loadTicker() {
@@ -70,4 +65,101 @@
       const data = await res.json();
 
       const seg1 = document.getElementById("ticker-seg1");
-      const seg2 = document
+      const seg2 = document.getElementById("ticker-seg2");
+
+      seg1.innerHTML = "";
+      seg2.innerHTML = "";
+
+      function addItem(label, obj, target) {
+        const span = document.createElement("span");
+        span.className = "ticker-item";
+        if (obj && obj.usd != null) {
+          const change = Number(obj.change);
+          if (change > 0) span.classList.add("ticker-up");
+          else if (change < 0) span.classList.add("ticker-down");
+          else span.classList.add("ticker-flat");
+          span.textContent = label + ": " + obj.usd.toFixed(2) + " (" + change + "%)";
+        } else {
+          span.classList.add("ticker-flat");
+          span.textContent = label + ": —";
+        }
+        target.appendChild(span);
+      }
+
+      // Criptos
+      addItem("₿ BTC", data.crypto?.BTC, seg1);
+      addItem("Ξ ETH", data.crypto?.ETH, seg1);
+      addItem("◎ SOL", data.crypto?.SOL, seg1);
+      addItem("BNB",   data.crypto?.BNB, seg1);
+      addItem("RARI",  data.crypto?.RARI, seg1);
+      addItem("ZORA",  data.crypto?.ZORA, seg1);
+
+      // Índices
+      function addIndex(label, value, target) {
+        const span = document.createElement("span");
+        span.className = "ticker-item ticker-flat";
+        span.textContent = label + ": " + (value ?? "—");
+        target.appendChild(span);
+      }
+      addIndex("S&P500",  data.indices?.sp500,   seg1);
+      addIndex("Nasdaq",  data.indices?.nasdaq,  seg1);
+      addIndex("DowJones",data.indices?.dowjones,seg1);
+
+      // Clona contenido
+      seg2.innerHTML = seg1.innerHTML;
+
+      // Medir ancho
+      await new Promise(requestAnimationFrame);
+      seg1Width = seg1.scrollWidth;
+
+      // Posiciones iniciales
+      pos1 = 0;
+      pos2 = seg1Width;
+
+      seg1.style.left = pos1 + "px";
+      seg2.style.left = pos2 + "px";
+
+      startLoop();
+
+    } catch (err) {
+      document.getElementById("ticker-seg1").textContent = "Error cargando datos";
+      console.error("Ticker error:", err);
+    }
+  }
+
+  function startLoop() {
+    cancelLoop();
+    function step() {
+      pos1 -= speed;
+      pos2 -= speed;
+
+      // Cuando un segmento sale por completo, lo recolocamos al final del otro
+      if (pos1 <= -seg1Width) {
+        pos1 = pos2 + seg1Width;
+      }
+      if (pos2 <= -seg1Width) {
+        pos2 = pos1 + seg1Width;
+      }
+
+      const seg1 = document.getElementById("ticker-seg1");
+      const seg2 = document.getElementById("ticker-seg2");
+      seg1.style.left = pos1 + "px";
+      seg2.style.left = pos2 + "px";
+
+      rafId = requestAnimationFrame(step);
+    }
+    rafId = requestAnimationFrame(step);
+  }
+
+  function cancelLoop() {
+    if (rafId != null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  }
+
+  loadTicker();
+  setInterval(loadTicker, 300000);
+  </script>
+</body>
+</html>
