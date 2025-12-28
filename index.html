@@ -1,121 +1,118 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Ticker</title>
-<style>
- html, body {
-   margin:0;
-   padding:0;
-   overflow:hidden; /* evita scroll interno */
- }
- #ticker-container {
-   position: fixed;
-   top: 0;
-   left: 0;
-   width: 100%;
-   height: 40px;
-   line-height: 40px;
-   z-index: 9999; /* asegura que quede encima */
-   border-top:none;
-   border-bottom:none;
-   overflow:hidden;
-   background:#14282d;   /* azul petróleo */
-   color:#e0e1dd;        /* gris claro */
-   font-family:"Open Sans", sans-serif;
-   font-size:13px;
-   display: block;
- }
- #ticker {
-   display:inline-block;
-   white-space:nowrap;
-   animation: scroll-left 25s linear infinite;
- }
- .ticker-item {
-   display:inline-block;
-   margin:0 25px;
-   font-weight:bold;
- }
- .ticker-up { color:#0f0; }
- .ticker-down { color:#f33; }
- .ticker-flat { color:#ff0; }
+  <meta charset="UTF-8">
+  <title>Ticker</title>
+  <style>
+    html, body {
+      margin:0;
+      padding:0;
+      overflow:hidden;
+    }
 
-@keyframes scroll-left {
-   0%   { transform: translateX(0); }
-   100% { transform: translateX(-200%); }
-}
+    /* Contenedor principal */
+    #ticker-container {
+      overflow: hidden;
+      background: #14282d;
+      color: #e0e1dd;
+      height: 40px;
+      line-height: 40px;
+      font-family:"Open Sans", sans-serif;
+      font-size:13px;
+    }
 
- @media (max-width: 768px) {
-   #ticker-container {
-     font-size: 12px;   /* texto más pequeño */
-     height: 32px;      /* menos alto */
-     line-height: 32px;
-   }
-   #menu {
-     margin-top: 32px;  /* ajusta al nuevo alto */
-   }
- }
-</style>
+    /* Pista que contiene dos copias */
+    #ticker-track {
+      display: flex;
+      width: max-content;
+    }
+
+    /* Cada copia se mueve en paralelo */
+    #ticker, #ticker-clone {
+      display: inline-block;
+      white-space: nowrap;
+      animation: scroll-left 20s linear infinite;
+    }
+
+    .ticker-item {
+      display:inline-block;
+      margin:0 25px;
+      font-weight:bold;
+    }
+    .ticker-up { color:#0f0; }
+    .ticker-down { color:#f33; }
+    .ticker-flat { color:#ff0; }
+
+    @keyframes scroll-left {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+  </style>
 </head>
 <body>
-<div id="ticker-container">
- <div id="ticker">Cargando datos del mercado...</div>
-</div>
+  <div id="ticker-container">
+    <div id="ticker-track">
+      <div id="ticker">Cargando datos...</div>
+      <div id="ticker-clone"></div>
+    </div>
+  </div>
 
-<script>
-async function loadTicker() {
- try {
-   const res = await fetch("https://ticker.maurorojasbiz.workers.dev/");
-   const data = await res.json();
-   const tickerDiv = document.getElementById("ticker");
-   tickerDiv.innerHTML = "";
+  <script>
+  async function loadTicker() {
+    try {
+      const res = await fetch("https://ticker.maurorojasbiz.workers.dev/");
+      const data = await res.json();
+      const tickerDiv = document.getElementById("ticker");
+      const cloneDiv = document.getElementById("ticker-clone");
+      tickerDiv.innerHTML = "";
+      cloneDiv.innerHTML = "";
 
-   function addItem(label, obj) {
-     const span = document.createElement("span");
-     span.className = "ticker-item";
-     if (obj && obj.usd != null) {
-       const change = Number(obj.change);
-       if (change > 0) span.classList.add("ticker-up");
-       else if (change < 0) span.classList.add("ticker-down");
-       else span.classList.add("ticker-flat");
-       span.textContent = label + ": " + obj.usd.toFixed(2) + " (" + change + "%)";
-     } else {
-       span.classList.add("ticker-flat");
-       span.textContent = label + ": —";
-     }
-     tickerDiv.appendChild(span);
-   }
+      function addItem(label, obj, target) {
+        const span = document.createElement("span");
+        span.className = "ticker-item";
+        if (obj && obj.usd != null) {
+          const change = Number(obj.change);
+          if (change > 0) span.classList.add("ticker-up");
+          else if (change < 0) span.classList.add("ticker-down");
+          else span.classList.add("ticker-flat");
+          span.textContent = label + ": " + obj.usd.toFixed(2) + " (" + change + "%)";
+        } else {
+          span.classList.add("ticker-flat");
+          span.textContent = label + ": —";
+        }
+        target.appendChild(span);
+      }
 
-   // Criptos
-   addItem("₿ BTC", data.crypto?.BTC);
-   addItem("Ξ ETH", data.crypto?.ETH);
-   addItem("◎ SOL", data.crypto?.SOL);
-   addItem("BNB", data.crypto?.BNB);
-   addItem("RARI", data.crypto?.RARI);
-   addItem("ZORA", data.crypto?.ZORA);
+      // Criptos
+      addItem("₿ BTC", data.crypto?.BTC, tickerDiv);
+      addItem("Ξ ETH", data.crypto?.ETH, tickerDiv);
+      addItem("◎ SOL", data.crypto?.SOL, tickerDiv);
+      addItem("BNB", data.crypto?.BNB, tickerDiv);
+      addItem("RARI", data.crypto?.RARI, tickerDiv);
+      addItem("ZORA", data.crypto?.ZORA, tickerDiv);
 
-   // Índices
-   function addIndex(label, value) {
-     const span = document.createElement("span");
-     span.className = "ticker-item ticker-flat";
-     span.textContent = label + ": " + (value ?? "—");
-     tickerDiv.appendChild(span);
-   }
-   addIndex("S&P500", data.indices?.sp500);
-   addIndex("Nasdaq", data.indices?.nasdaq);
-   addIndex("DowJones", data.indices?.dowjones);
+      // Índices
+      function addIndex(label, value, target) {
+        const span = document.createElement("span");
+        span.className = "ticker-item ticker-flat";
+        span.textContent = label + ": " + (value ?? "—");
+        target.appendChild(span);
+      }
+      addIndex("S&P500", data.indices?.sp500, tickerDiv);
+      addIndex("Nasdaq", data.indices?.nasdaq, tickerDiv);
+      addIndex("DowJones", data.indices?.dowjones, tickerDiv);
 
-   // 🔁 duplicar contenido para scroll infinito
-   tickerDiv.innerHTML += tickerDiv.innerHTML;
+      // Copiar contenido al clon
+      cloneDiv.innerHTML = tickerDiv.innerHTML;
 
- } catch (err) {
-   document.getElementById("ticker").textContent = "Error cargando datos";
-   console.error("Ticker error:", err);
- }
-}
+    } catch (err) {
+      document.getElementById("ticker").textContent = "Error cargando datos";
+      console.error("Ticker error:", err);
+    }
+  }
 
-loadTicker();
-setInterval(loadTicker, 300000); // refresca cada 5 min
-</script>
+  loadTicker();
+  setInterval(loadTicker, 300000); // refresca cada 5 min
+  </script>
 </body>
 </html>
