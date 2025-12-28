@@ -20,18 +20,16 @@
       font-size:13px;
     }
 
+    /* Track con tres copias en fila */
     #ticker-track {
-      position: relative;
       display: flex;
       white-space: nowrap;
-      will-change: transform;
+      animation: scroll 20s linear infinite;
     }
 
-    .ticker-segment {
+    .ticker-inner {
       display: inline-block;
       white-space: nowrap;
-      position: absolute;
-      top: 0;
     }
 
     .ticker-item {
@@ -42,31 +40,36 @@
     .ticker-up   { color:#00d26a; }
     .ticker-down { color:#ff3b3b; }
     .ticker-flat { color:#ffd400; }
+
+    @keyframes scroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+
+    @media (max-width: 768px) {
+      #ticker-container { height: 32px; line-height: 32px; font-size:12px; }
+      .ticker-item { margin: 0 18px; }
+    }
   </style>
 </head>
 <body>
   <div id="ticker-container">
     <div id="ticker-track">
-      <div id="ticker-seg1" class="ticker-segment">Cargando datos...</div>
-      <div id="ticker-seg2" class="ticker-segment"></div>
-      <div id="ticker-seg3" class="ticker-segment"></div>
+      <div id="seg1" class="ticker-inner">Cargando datos...</div>
+      <div id="seg2" class="ticker-inner"></div>
+      <div id="seg3" class="ticker-inner"></div>
     </div>
   </div>
 
   <script>
-  let segWidth = 0;
-  let pos1 = 0, pos2 = 0, pos3 = 0;
-  let speed = 1; // píxeles por frame
-  let rafId = null;
-
   async function loadTicker() {
     try {
       const res = await fetch("https://ticker.maurorojasbiz.workers.dev/");
       const data = await res.json();
 
-      const seg1 = document.getElementById("ticker-seg1");
-      const seg2 = document.getElementById("ticker-seg2");
-      const seg3 = document.getElementById("ticker-seg3");
+      const seg1 = document.getElementById("seg1");
+      const seg2 = document.getElementById("seg2");
+      const seg3 = document.getElementById("seg3");
 
       seg1.innerHTML = "";
       seg2.innerHTML = "";
@@ -111,55 +114,9 @@
       seg2.innerHTML = seg1.innerHTML;
       seg3.innerHTML = seg1.innerHTML;
 
-      // Medir ancho
-      await new Promise(requestAnimationFrame);
-      segWidth = seg1.scrollWidth;
-
-      // Posiciones iniciales
-      pos1 = 0;
-      pos2 = segWidth;
-      pos3 = segWidth * 2;
-
-      seg1.style.left = pos1 + "px";
-      seg2.style.left = pos2 + "px";
-      seg3.style.left = pos3 + "px";
-
-      startLoop();
-
     } catch (err) {
-      document.getElementById("ticker-seg1").textContent = "Error cargando datos";
+      document.getElementById("seg1").textContent = "Error cargando datos";
       console.error("Ticker error:", err);
-    }
-  }
-
-  function startLoop() {
-    cancelLoop();
-    function step() {
-      pos1 -= speed;
-      pos2 -= speed;
-      pos3 -= speed;
-
-      // Recolocar cada segmento cuando sale por completo
-      if (pos1 <= -segWidth) pos1 = Math.max(pos2, pos3) + segWidth;
-      if (pos2 <= -segWidth) pos2 = Math.max(pos1, pos3) + segWidth;
-      if (pos3 <= -segWidth) pos3 = Math.max(pos1, pos2) + segWidth;
-
-      const seg1 = document.getElementById("ticker-seg1");
-      const seg2 = document.getElementById("ticker-seg2");
-      const seg3 = document.getElementById("ticker-seg3");
-      seg1.style.left = pos1 + "px";
-      seg2.style.left = pos2 + "px";
-      seg3.style.left = pos3 + "px";
-
-      rafId = requestAnimationFrame(step);
-    }
-    rafId = requestAnimationFrame(step);
-  }
-
-  function cancelLoop() {
-    if (rafId != null) {
-      cancelAnimationFrame(rafId);
-      rafId = null;
     }
   }
 
