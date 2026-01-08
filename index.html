@@ -60,15 +60,16 @@
     </div>
   </div>
 
-  <script>
-  let pos = 0;            // posición actual del track
-  let segWidth = 0;       // ancho de una copia (seg1)
-  let speed = 20 / 60;    // píxeles por frame (~50px/s a 60fps)
+<script>
+  let pos = 0;
+  let segWidth = 0;
+  let speed = 20 / 60;
   let rafId = null;
 
   async function loadTicker() {
     try {
-      const res = await fetch("https://ticker.maurorojasbiz.workers.dev/");
+      // 🔹 Forzamos anticache con Date.now()
+      const res = await fetch("https://ticker.maurorojasbiz.workers.dev/?nocache=" + Date.now());
       const data = await res.json();
 
       const seg1 = document.getElementById("seg1");
@@ -114,15 +115,12 @@
       addIndex("Nasdaq",  data.indices?.nasdaq,  seg1);
       addIndex("DowJones",data.indices?.dowjones,seg1);
 
-      // Clonar contenido en seg2 y seg3
       seg2.innerHTML = seg1.innerHTML;
       seg3.innerHTML = seg1.innerHTML;
 
-      // Medir ancho real de una copia
       await new Promise(requestAnimationFrame);
       segWidth = seg1.scrollWidth;
 
-      // Reiniciar loop con posición alineada al ancho de una copia
       startLoop(true);
 
     } catch (err) {
@@ -131,58 +129,9 @@
     }
   }
 
-  function startLoop(resetPos = false) {
-    cancelLoop();
-
-    if (resetPos) {
-      // Alinea la posición al múltiplo del ancho para evitar micro saltos al reanudar
-      pos = pos % segWidth;
-    }
-
-    const track = document.getElementById("ticker-track");
-
-    function step() {
-      pos -= speed; // avanza hacia la izquierda
-
-      // Wrap continuo: cuando se desplazó una copia completa, restamos su ancho
-      // Esto evita cualquier reinicio visible o solapamiento.
-      if (pos <= -segWidth) {
-        pos += segWidth;
-      }
-
-      track.style.transform = `translateX(${pos}px)`;
-      rafId = requestAnimationFrame(step);
-    }
-
-    rafId = requestAnimationFrame(step);
-  }
-
-  function cancelLoop() {
-    if (rafId != null) {
-      cancelAnimationFrame(rafId);
-      rafId = null;
-    }
-  }
-
-  // Recalcular en resize para mantener continuidad sin saltos
-  window.addEventListener("resize", async () => {
-    const seg1 = document.getElementById("seg1");
-    await new Promise(requestAnimationFrame);
-    const newWidth = seg1.scrollWidth;
-
-    if (newWidth && newWidth !== segWidth) {
-      // Ajusta posición al nuevo ancho manteniendo la fase del scroll
-      const phase = (-pos) % segWidth;            // cuánto de la copia ya se desplazó
-      segWidth = newWidth;
-      pos = -(phase % segWidth);                  // reubica sin brinco
-    }
-  });
-
-  // Carga inicial y refresco cada 5 minutos
+  // 🔹 Refresco automático cada 60 segundos (ajusta si prefieres más tiempo)
   loadTicker();
-  setInterval(async () => {
-    await loadTicker();
-  }, 300000);
-  </script>
+  setInterval(loadTicker, 60000);
+</script>
 </body>
 </html>
